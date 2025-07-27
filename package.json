@@ -1,5 +1,5 @@
 {
-  "name": "elevenlabs_test",
+  "name": "elevenlabs-tts-visemes-generator",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {

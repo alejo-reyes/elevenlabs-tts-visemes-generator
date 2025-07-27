@@ -1,4 +1,4 @@
-# ElevenLabs Text-to-Speech Viseme Generator
+# ElevenLabs TTS Visemes Generator
 
 _Author: AReyes (<alejo.reyes@gmail.com>)_
 
