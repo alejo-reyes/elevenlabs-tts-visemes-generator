@@ -1,16 +1,27 @@
-import fs from 'fs/promises';
-import { Buffer } from 'buffer';
-import path from 'path';
-import { dictionary } from 'cmu-pronouncing-dictionary';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
-import { distance as levenshteinDistance } from 'fastest-levenshtein';
 import {} from 'dotenv/config';
+import fs from 'fs/promises';
+import path from 'path';
+import readline from 'readline/promises';
+import { dictionary } from 'cmu-pronouncing-dictionary';
+import { distance as levenshteinDistance } from 'fastest-levenshtein';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
 const elevenlabs = new ElevenLabsClient({
   apiKey: process.env.ELEVEN_LABS_API_KEY
 });
+
+// Fetch subscription info
+async function getSubscriptionInfo() {
+  const user = await elevenlabs.user.get();
+  const sub = user.subscription;
+  return {
+    charactersRemaining: sub.characterLimit - sub.characterCount,
+    characterLimit: sub.characterLimit,
+    characterCount: sub.characterCount
+  };
+}
 
 const inputTextPath = path.join('./input', 'speech.txt');
 
@@ -22,6 +33,25 @@ try {
   console.error(`❌ Error: Could not read input text file at ${inputTextPath}.`);
   console.error('Please provide a valid text file in /input/speech.txt.');
   process.exit(1);
+}
+
+// New: Character count and confirmation
+const promptCharCount = message.length;
+const subInfo = await getSubscriptionInfo();
+const remainingAfter = subInfo.charactersRemaining - promptCharCount;
+
+console.log('\n=== ElevenLabs Character Usage ===');
+console.log(`Characters Remaining: ${subInfo.charactersRemaining}`);
+console.log(`Characters in Current Prompt: ${promptCharCount}`);
+console.log(`Characters Remaining After This Request: ${remainingAfter}\n`);
+
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+const answer = await rl.question('Do you want to continue with text-to-speech? (y/n): ');
+await rl.close();
+
+if (answer.trim().toLowerCase() !== 'y') {
+  console.log('Aborted by user.');
+  process.exit(0);
 }
 
 const voiceId = process.env.ELEVEN_LABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM';
